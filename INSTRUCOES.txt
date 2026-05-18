@@ -1,0 +1,167 @@
+PROJETO: UTILITARIOS UNIX EM C (pinfalse)
+
+0) O QUE ESTA IMPLEMENTADO (ESCOLHA DO GRUPO)
+
+Comandos obrigatorios (do briefing):
+  - sort
+  - ls
+  - UEsh (islash) -> a shell
+
+Comandos opcionais escolhidos (6):
+  - head
+  - tail
+  - cp
+  - mv
+  - rm
+  - grep
+
+Resumo em 1 frase (para explicares ao professor):
+  - Cada comando e um programa em C (um executavel), e o UEsh (islash) e uma shell
+    que le o que escreves, faz fork(), e usa exec() para correr os executaveis.
+
+1) O QUE EXISTE NA PASTA
+
+Este projeto esta organizado assim:
+  - src/       codigo fonte (.c)
+  - include/   headers (.h)
+  - bin/       executaveis gerados pelo "make"
+  - tests/     ficheiros .txt para testar head/tail
+
+Executaveis gerados em bin/:
+  bin/head  bin/tail  bin/ls  bin/sort  bin/cp  bin/mv  bin/rm  bin/grep  bin/islash
+
+
+2) PORQUE AS VEZES "NAO ACONTECE NADA" QUANDO CORRES make
+
+O make compila apenas o que mudou.
+Se os ficheiros em bin/ ja estao mais recentes do que os .c em src/,
+o make diz:
+  "Nothing to be done"
+Isso significa: ja esta tudo compilado.
+
+Para forcar recompilar tudo:
+  make clean
+  make
+
+
+3) COMO COMPILAR (COMANDOS)
+
+Estando na pasta do projeto (pinfalse):
+  cd /caminho/para/pinfalse
+  make clean
+  make
+
+Para ver os executaveis:
+  ls -la bin
+
+
+4) COMO EXECUTAR OS TEUS COMANDOS (IMPORTANTE)
+
+No macOS e no Linux ja existem comandos "head", "tail", etc no sistema.
+Se escreveres apenas:
+  head ...
+vais executar o head do SISTEMA (nao o do projeto).
+
+Para executar os do projeto usa SEMPRE o caminho:
+  ./bin/head ...
+  ./bin/tail ...
+  ./bin/ls ...
+
+Exemplo:
+  ./bin/head -3 tests/texto_1.txt
+
+Nota sobre caminhos do sistema:
+  - No macOS normalmente o head do sistema esta em /usr/bin/head
+  - Por isso /bin/head pode nao existir (da erro "no such file or directory")
+
+
+5) TESTES RAPIDOS (COMANDOS PRONTOS PARA COPIAR/COLAR)
+
+5.1) head (primeiras linhas)
+  ./bin/head tests/texto_1.txt
+  ./bin/head -3 tests/texto_1.txt
+  ./bin/head -5 -n tests/texto_1.txt
+  ./bin/head -5 -n -E tests/texto_1.txt
+
+5.2) tail (ultimas linhas)
+  ./bin/tail tests/texto_1.txt
+  ./bin/tail -3 tests/texto_1.txt
+  ./bin/tail -7 -n tests/texto_1.txt
+  ./bin/tail -7 -n -E tests/texto_1.txt
+
+5.3) ls (lista diretorios)
+  ./bin/ls
+  ./bin/ls -l
+  ./bin/ls -c
+  ./bin/ls -on
+  ./bin/ls -os
+  ./bin/ls -od
+  ./bin/ls -l tests
+
+5.4) sort (ordena ficheiros e grava FICHEIRO.sort; em sucesso nao imprime nada)
+  ./bin/sort tests/texto_2.txt
+  ls -la tests/texto_2.txt.sort
+  ./bin/sort -d tests/texto_2.txt
+
+5.5) cp (copia ficheiros)
+  ./bin/cp tests/texto_1.txt tests/copia.txt
+  ./bin/cp -i tests/texto_1.txt tests/copia.txt
+
+5.6) mv (move/renomeia)
+  ./bin/mv tests/copia.txt tests/copia_renomeada.txt
+  ./bin/mv -i tests/copia_renomeada.txt tests/texto_1.txt
+
+5.7) rm (apaga ficheiros)
+  ./bin/rm tests/copia_renomeada.txt
+  ./bin/rm -y tests/texto_2.txt.sort
+
+5.8) grep (procura texto dentro de ficheiros)
+  ./bin/grep Linha tests/texto_1.txt
+  ./bin/grep -n Linha tests/texto_1.txt
+  ./bin/grep -i linha tests/texto_1.txt
+  ./bin/grep -v Linha tests/texto_1.txt
+  ./bin/grep -c Linha tests/texto_1.txt
+
+
+6) UESH (islash) - COMO FUNCIONA E COMO USAR
+
+Executa a shell do projeto:
+  ./bin/islash
+
+O prompt aparece como:
+  username@hostname (diretorio_atual) >
+
+Comandos internos:
+  cd <dir>    muda diretoria
+  pwd         mostra diretorio atual
+  echo ...    imprime texto
+  sleep N     pausa N segundos
+  exit        sai da shell
+
+Comandos externos (os do trabalho):
+  ls, sort, cp, mv, rm, grep, head, tail
+
+Como a shell executa os comandos do projeto:
+  - Quando escreves "head", a shell tenta correr o executavel em bin/head
+    (a partir da pasta onde arrancaste o islash).
+  - Se nao for um dos comandos do projeto, ela tenta executar via PATH do sistema.
+
+Exemplo de sessao:
+  ./bin/islash
+  pwd
+  ls
+  head -3 tests/texto_1.txt
+  tail -3 tests/texto_1.txt
+  exit
+
+
+7) AJUDA (-h)
+
+Todos os comandos do projeto aceitam:
+  -h
+para mostrar a sintaxe e sair.
+
+Exemplos:
+  ./bin/head -h
+  ./bin/ls -h
+  ./bin/islash -h

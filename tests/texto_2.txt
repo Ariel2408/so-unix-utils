@@ -1,0 +1,8 @@
+Uma linha sem numeros
+Outra linha
+Mais uma linha
+Linha com espacos no fim    
+LINHA EM MAIUSCULAS
+linha em minusculas
+1234567890
+fim

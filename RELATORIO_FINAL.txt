@@ -1,0 +1,469 @@
+RELATORIO FINAL
+Implementacao de comandos/utilitarios UNIX em Linguagem C
+Unidade Curricular: Sistemas Operativos (Engenharia Informatica) | 2025-2026
+
+Professores:
+  - Pedro Rosa (pedro.rosa@universidadeeuropeia.pt)
+  - Duarte Cavaleiro (duarte.cavaleiro@ext.universidadeeuropeia.pt)
+
+Grupo: G__ (preencher)  |  Elementos: _________________________________ (preencher)
+
+
+0) ENQUADRAMENTO E OBJETIVO
+
+Este trabalho tem como objetivo implementar um conjunto de comandos/utilitarios ao estilo UNIX,
+em Linguagem C, com foco na aprendizagem pratica de:
+  - manipulacao de ficheiros e diretorios em Linux (system calls / funcoes POSIX)
+  - criacao e controlo de processos (fork, exec, wait)
+  - leitura/interpretacao de argumentos da linha de comandos
+  - tratamento consistente de erros (errno + mensagens claras)
+
+O briefing define 3 comandos obrigatorios (sort, ls e UEsh) e 6 comandos opcionais escolhidos.
+Foi tambem exigida a reutilizacao de uma biblioteca comum e a opcao -h em todos os comandos.
+
+0.1) Entregaveis (de acordo com a tarefa)
+  - Codigo-fonte completo do projeto (src/ e include/ + Makefile)
+  - Relatorio final (idealmente em PDF)
+
+
+1) RESUMO EXECUTIVO (PARA APRESENTAR AO PROFESSOR)
+
+1.1) O que foi feito
+Foram implementados 9 comandos ao estilo UNIX (3 obrigatorios + 6 opcionais) e uma shell (UEsh),
+todos em C, com organizacao por pastas (src/include/bin/tests) e compilacao automatizada via Makefile.
+
+1.2) Como funciona (visao simples)
+  - Cada comando e um programa independente (um executavel em bin/).
+  - A shell (islash) le a linha do utilizador, identifica se e comando interno ou externo:
+      * interno: executa na propria shell (ex.: cd altera a diretoria do processo da shell)
+      * externo: cria um processo filho (fork) e o filho executa o programa (exec)
+
+1.3) Requisitos do briefing cumpridos
+  - 3/3 comandos obrigatorios implementados: sort, ls, UEsh
+  - 6/6 comandos opcionais implementados: head, tail, cp, mv, rm, grep
+  - opcao -h em todos os comandos
+  - biblioteca comum reutilizada em todos os comandos
+  - codigo formatado e compilacao sem warnings (flags de warnings ativas)
+
+1.4) Como executar rapidamente (demo curta)
+  make clean && make
+  ./bin/ls -l tests
+  ./bin/head -3 tests/texto_1.txt
+  ./bin/tail -3 tests/texto_1.txt
+  ./bin/grep -n Linha tests/texto_1.txt
+  ./bin/sort tests/texto_2.txt
+  ./bin/islash
+
+
+2) COMANDOS IMPLEMENTADOS
+
+2.1) Obrigatorios (3/3)
+  - ID09 sort (src/sort.c)
+  - ID10 ls (src/ls.c)
+  - ID11 UEsh / islash (src/islash.c)
+
+2.2) Opcionais escolhidos (6/6)
+  - ID02 head (src/head.c)
+  - ID01 tail (src/tail.c)
+  - ID03 cp (src/cp.c)
+  - ID04 mv (src/mv.c)
+  - ID05 rm (src/rm.c)
+  - ID07 grep (src/grep.c)
+
+2.3) Nao implementados
+  - ID08 replace (nao fazia parte da selecao de 6 opcionais)
+
+
+3) ORGANIZACAO DO PROJETO E ENTREGAVEIS
+
+3.1) Estrutura de pastas
+  - src/       codigo fonte (.c) de cada comando
+  - include/   headers (.h), incluindo a biblioteca comum do projeto
+  - bin/       executaveis gerados pelo make (um por comando)
+  - tests/     ficheiros .txt de teste
+
+3.2) Principais ficheiros
+  - Makefile
+      * compila todos os comandos e coloca os binarios em bin/
+      * cria as pastas bin/ e build/
+      * clean remove bin/ e build/
+  - include/common.h e src/common.c
+      * biblioteca comum, reutilizada nos comandos
+  - src/islash.c
+      * implementacao da shell UEsh
+
+
+4) BIBLIOTECA COMUM (REUTILIZACAO E CONSISTENCIA)
+
+O briefing exige reutilizacao de funcoes comuns. Para cumprir isso, foi criada a biblioteca comum
+(include/common.h + src/common.c) com funcoes usadas em multiplos comandos.
+
+4.1) Parsing e validacao
+  - arg_has_flag(argc, argv, "-h")
+      * deteta flags exatas, usado para suportar -h em todos os comandos
+  - parse_dash_number("-10")
+      * interpreta opcoes do tipo -NUM em head/tail
+  - parse_long_strict("123")
+      * converte string para inteiro longo com validacao completa (ex.: sleep)
+
+4.2) Entrada/Saida e robustez
+  - write_all(fd, buf, n)
+      * escreve todos os bytes mesmo com interrupcoes (EINTR)
+      * usado em cp e mv (copy+unlink)
+
+4.3) Utilitarios de memoria e strings
+  - xmalloc/xrealloc/xstrdup
+      * simplificam o codigo e garantem falha explicita se nao houver memoria
+
+4.4) Interacao com o utilizador (modo interativo)
+  - prompt_yes_no("... [y/N] ")
+      * usado em cp -i, mv -i e rm -y
+
+4.5) Caminhos
+  - path_join2(a,b)
+      * concatena caminhos de forma segura (com / quando necessario)
+      * usado no ls (stat do ficheiro) e no islash (procurar executaveis em bin/)
+
+4.6) Impacto (porque isto melhora o projeto)
+  - Evita duplicacao de parsing e validacao em 9 comandos
+  - Mantem mensagens e comportamento consistentes
+  - Facilita a manutencao e a apresentacao (explicacao de padroes repetidos)
+
+
+5) METODOLOGIA DE DESENVOLVIMENTO
+
+5.1) Abordagem
+  - Primeiro foi definida a organizacao do projeto e a biblioteca comum.
+  - Depois foram implementados os comandos um a um, sempre garantindo:
+      * suporte a -h
+      * mensagens de erro claras
+      * comportamento proximo do briefing
+  - Por fim foi implementada a shell (islash) para executar os comandos do projeto.
+
+5.2) Boas praticas seguidas
+  - codigo consistente (mesmo estilo e mesmos utilitarios em todos os comandos)
+  - tratamento de erros com errno/strerror onde aplicavel
+  - compilacao com flags que nao permitem warnings
+
+
+6) COMPILACAO E EXECUCAO (PASSO A PASSO)
+
+6.1) Compilar (gera bin/*)
+Na pasta do projeto:
+  make clean
+  make
+
+6.2) Confirmar binarios
+  ls -la bin
+
+6.3) Executar comandos do projeto
+Para evitar confusao com comandos do sistema, usar sempre:
+  ./bin/NOME_DO_COMANDO ...
+
+Exemplo:
+  ./bin/head -3 tests/texto_1.txt
+
+6.4) Execucao em Linux (requisito do briefing)
+O briefing indica que o trabalho deve ser realizado em Linux. O codigo usa API POSIX (opendir,
+readdir, stat/lstat, fork/exec/wait, open/read/write, etc) e foi desenhado para compilar e correr em Linux.
+
+Recomendacao para a entrega/apresentacao:
+  - compilar e demonstrar em Linux (VM) com:
+      make clean && make
+      ./bin/islash
+
+
+7) DESCRICAO TECNICA (O QUE CADA COMANDO FAZ E COMO FOI IMPLEMENTADO)
+
+Regra comum: todos suportam -h
+  - Se o utilizador passar -h, o comando imprime uma ajuda minima e termina imediatamente.
+
+7.1) head (ID02)
+Objetivo (briefing):
+  - imprimir as primeiras linhas do ficheiro (por omissao: 10)
+Opcoes:
+  -NUM (ex.: -5): imprime NUM linhas
+  -n : prefixa a linha com o numero da linha (ex.: "3:...")
+  -E : imprime "$" no fim da linha (indicador de fim de linha)
+Implementacao (resumo):
+  - usa getline() para ler linha a linha
+  - imprime ate atingir o limite
+  - se o ficheiro nao existe: imprime erro e devolve codigo != 0
+
+7.2) tail (ID01)
+Objetivo (briefing):
+  - imprimir as ultimas linhas do ficheiro (por omissao: 10)
+Opcoes:
+  -NUM (ex.: -5): imprime as ultimas NUM linhas
+  -n : prefixa a linha com o numero da linha real no ficheiro
+  -E : imprime "$" no fim da linha
+Implementacao (resumo):
+  - usa getline() para ler linha a linha
+  - guarda apenas as ultimas N linhas num buffer circular (ring buffer)
+  - no fim, imprime o buffer na ordem correta
+Vantagem:
+  - nao e necessario carregar o ficheiro inteiro em memoria
+
+7.3) cp (ID03)
+Objetivo (briefing):
+  - copiar ORIGEM para DESTINO
+Opcao:
+  -i : se DESTINO existir, pergunta antes de sobrescrever
+Implementacao (resumo):
+  - open(ORIGEM) em leitura
+  - open(DESTINO) com O_CREAT|O_TRUNC, mantendo permissoes baseadas na origem
+  - loop read() + write_all() com buffer
+  - em erro, imprime mensagem e retorna != 0
+
+7.4) mv (ID04)
+Objetivo (briefing):
+  - mover ou renomear ORIGEM para DESTINO
+Opcao:
+  -i : se DESTINO existir, pergunta antes de sobrescrever
+Implementacao (resumo):
+  - primeiro tenta rename(ORIGEM, DESTINO) (rapido e atomico no mesmo filesystem)
+  - se falhar por EXDEV (filesystem diferente), faz:
+      copy (igual ao cp) + unlink(ORIGEM)
+
+7.5) rm (ID05)
+Objetivo (briefing):
+  - apagar ficheiros, confirmando existencia antes de remover
+Opcao:
+  -y : confirma cada ficheiro antes de apagar
+Implementacao (resumo):
+  - lstat() para validar existencia
+  - se -y: prompt_yes_no()
+  - unlink() para apagar
+
+7.6) grep (ID07)
+Objetivo (briefing):
+  - procurar STRING dentro de ficheiros; por omissao mostra linhas que contem STRING
+Opcoes:
+  -c : nao mostra linhas; mostra numero de ocorrencias
+  -n : prefixa linhas com numero de linha
+  -i : ignora maiusculas/minusculas
+  -v : mostra linhas que NAO contem STRING (modo invertido)
+Implementacao (resumo):
+  - leitura linha a linha com getline()
+  - pesquisa por substring:
+      * normal: strstr()
+      * -i: comparacao case-insensitive manual
+  - em modo -c:
+      * modo normal conta ocorrencias por linha (nao apenas linhas)
+      * modo -v conta numero de linhas que NAO tem a string (comportamento escolhido e documentado)
+  - quando sao passados varios ficheiros, o output inclui "ficheiro:" como prefixo
+
+7.7) sort (ID09) (OBRIGATORIO)
+Objetivo (briefing):
+  - ordenar o ficheiro e gravar em FICHEIRO.sort
+  - por omissao: crescente; opcao -d: decrescente
+  - em sucesso: sem output; em erro: indicar erro
+Implementacao (resumo):
+  - le todas as linhas para memoria (getline + array dinamico)
+  - qsort() com strcmp (ascendente/descendente)
+  - escreve em "FICHEIRO.sort"
+Observacao:
+  - esta abordagem e simples e adequada para ficheiros de texto de tamanho moderado (contexto academico)
+
+7.8) ls (ID10) (OBRIGATORIO)
+Objetivo (briefing):
+  - listar ficheiros do diretorio indicado
+Opcoes:
+  -l : listagem longa (nome, dimensao, data)
+  -ox: ordena por n (nome), s (dimensao), d (data)
+  -c : listagem por colunas
+Implementacao (resumo):
+  - opendir() + readdir() para obter entradas do diretorio
+  - lstat() para obter st_size e st_mtime
+  - guarda entradas num array dinamico e ordena com qsort()
+  - imprime em formato simples, longo ou colunas (80 colunas por defeito)
+
+7.9) UEsh / islash (ID11) (OBRIGATORIO)
+Objetivo (briefing):
+  - criar uma shell com prompt e comandos internos/externos
+Prompt (briefing):
+  username@hostname (diretorio_atual) >
+Comandos internos:
+  - cd <diretorio>
+  - pwd
+  - echo <string>
+  - sleep <num>
+  - exit
+Execucao de externos:
+  - os restantes comandos do trabalho
+Implementacao (resumo):
+  - prompt:
+      * username: getpwuid(getuid())
+      * hostname: gethostname()
+      * diretoria: getcwd()
+  - leitura do input: getline()
+  - parsing: tokenize por espacos/tab (strtok_r)
+  - internos:
+      * cd -> chdir()
+      * pwd -> getcwd()
+      * echo -> escreve os argumentos
+      * sleep -> sleep(segundos)
+      * exit -> termina loop
+  - externos:
+      * fork()
+      * filho: execv(".../bin/<cmd>") para comandos do projeto; caso contrario execvp()
+      * pai: waitpid()
+Limitacoes assumidas (documentadas):
+  - nao implementa pipes (|), redirecionamentos (>, <) ou aspas/escape completos
+  - objetivo e cumprir o comportamento pedido no briefing para uma shell simples
+
+
+8) TESTES E RESULTADOS
+
+8.1) Ficheiros de teste incluidos
+  - tests/texto_1.txt (linhas numeradas, bom para head/tail/grep)
+  - tests/texto_2.txt (varias linhas, bom para sort/grep)
+
+8.2) Script/roteiro de testes (exemplos)
+Compilacao:
+  make clean && make
+
+head/tail:
+  ./bin/head -3 tests/texto_1.txt
+  ./bin/tail -3 tests/texto_1.txt
+  ./bin/head -5 -n -E tests/texto_1.txt
+  ./bin/tail -7 -n -E tests/texto_1.txt
+
+grep:
+  ./bin/grep -n Linha tests/texto_1.txt
+  ./bin/grep -i linha tests/texto_1.txt
+  ./bin/grep -v Linha tests/texto_1.txt
+  ./bin/grep -c Linha tests/texto_1.txt
+
+sort:
+  rm -f tests/texto_2.txt.sort
+  ./bin/sort tests/texto_2.txt
+  ls -la tests/texto_2.txt.sort
+
+ls:
+  ./bin/ls
+  ./bin/ls -l tests
+  ./bin/ls -od tests
+  ./bin/ls -c tests
+
+cp/mv/rm:
+  rm -f tests/tmp_cp.txt tests/tmp_mv.txt
+  ./bin/cp tests/texto_1.txt tests/tmp_cp.txt
+  ./bin/mv tests/tmp_cp.txt tests/tmp_mv.txt
+  printf "y\n" | ./bin/rm -y tests/tmp_mv.txt
+
+UEsh:
+  ./bin/islash
+  (dentro da shell: pwd, ls, head -3 tests/texto_1.txt, grep -n Linha tests/texto_1.txt, exit)
+
+8.3) Evidencias (screenshots) (para inserir no PDF)
+Sugestao: tirar 1 screenshot por comando, mostrando comando e output.
+Inserir no relatorio como:
+  - Figura 1: head (opcao -n e -E)
+  - Figura 2: tail (opcao -NUM)
+  - Figura 3: cp e mv (com e sem -i)
+  - Figura 4: rm (com -y)
+  - Figura 5: grep (opcoes -n, -i, -v e -c)
+  - Figura 6: sort (criacao de ficheiro .sort e -d)
+  - Figura 7: ls (opcoes -l, -c, -on/-os/-od)
+  - Figura 8: UEsh (prompt + comandos internos + execucao de um externo)
+
+Comandos sugeridos para as capturas:
+  ./bin/head -5 -n -E tests/texto_1.txt
+  ./bin/tail -7 -n -E tests/texto_1.txt
+  ./bin/cp tests/texto_1.txt tests/copia.txt
+  ./bin/mv tests/copia.txt tests/copia_renomeada.txt
+  printf "y\n" | ./bin/rm -y tests/copia_renomeada.txt
+  ./bin/grep -n Linha tests/texto_1.txt
+  ./bin/grep -i linha tests/texto_1.txt
+  ./bin/grep -v Linha tests/texto_1.txt
+  ./bin/grep -c Linha tests/texto_1.txt
+  ./bin/sort tests/texto_2.txt
+  ./bin/ls -l tests
+  ./bin/ls -c tests
+  ./bin/ls -od tests
+  ./bin/islash
+
+
+9) CONFORMIDADE COM O BRIEFING (CHECKLIST)
+
+  [OK] Implementacao em C, estilo UNIX
+  [OK] 3 comandos obrigatorios: sort, ls, UEsh
+  [OK] 6 comandos opcionais: head, tail, cp, mv, rm, grep
+  [OK] Biblioteca comum (funcoes reutilizadas) em include/common.h + src/common.c
+  [OK] Opcao -h presente em todos os comandos
+  [OK] Em sort: em sucesso nao imprime output; em erro imprime mensagem
+  [OK] Codigo sobrio e legivel; compilacao com flags de warnings e sem warnings
+
+
+10) DISTRIBUICAO DO TRABALHO (preencher)
+
+Identificar quem ficou responsavel por cada comando/funcionalidade:
+  - Biblioteca comum (common.c/common.h): ________________________
+  - UEsh (islash): ________________________
+  - ls: ________________________
+  - sort: ________________________
+  - head: ________________________
+  - tail: ________________________
+  - cp: ________________________
+  - mv: ________________________
+  - rm: ________________________
+  - grep: ________________________
+  - Testes e ficheiros em tests/: ________________________
+  - Makefile/estrutura do projeto: ________________________
+  - Relatorio e screenshots: ________________________
+
+
+11) DIFICULDADES ENCONTRADAS (E COMO FORAM RESOLVIDAS)
+
+11.1) Dificuldades gerais
+  - Garantir que todos os comandos tinham -h e terminavam imediatamente ao mostrar ajuda.
+  - Evitar duplicacao de codigo criando uma biblioteca comum para parsing/erros/utilitarios.
+  - Diferencas entre comandos do sistema e executaveis do projeto (resolvido ao padronizar ./bin/...).
+
+11.2) Por comando (resumo)
+  - tail: necessidade de ler ficheiros sem guardar tudo em memoria; foi usado um buffer circular com as ultimas N linhas.
+  - mv: mover entre filesystems pode falhar com rename(); foi criado fallback copy+unlink quando ocorre EXDEV.
+  - ls: para ordenar por nome/tamanho/data foi necessario obter metadados via lstat() e ordenar com qsort().
+  - grep: suporte a -i e -c exigiu logica adicional para pesquisa case-insensitive e contagem.
+  - UEsh: distinguir internos/externos e manter o prompt com user/host/cwd; resolvido com getpwuid/gethostname/getcwd e fork/exec/wait.
+
+
+12) AMBIGUIDADES / PROBLEMAS ENCONTRADOS (E DECISOES)
+
+12.1) grep -c e -v
+O briefing pede "-c: numero de ocorrencias" e "-v: inverso". Quando -v e usado, "ocorrencias" pode ser interpretado como:
+  a) numero de linhas que NAO contem a string
+  b) numero de "nao-ocorrencias" (na pratica nao faz sentido contar)
+Decisao implementada:
+  - Sem -v: -c conta ocorrencias da string.
+  - Com -v: -c conta linhas que NAO contem a string.
+
+12.2) ls -c (colunas)
+O briefing pede listagem por colunas. Decisao:
+  - largura fixa de 80 colunas para simplificar (sem depender de funcoes externas).
+
+12.3) head/tail e final de linha (-E)
+Para cumprir "-E indica fim de linha ($ no fim de cada linha)", foi implementado:
+  - se a linha termina com '\n', imprime '$' antes do '\n'
+  - se a ultima linha nao tem '\n', imprime '$' e adiciona '\n'
+
+
+13) LIMITACOES E POSSIVEIS MELHORIAS
+
+10.1) Limitacoes atuais (aceites para o objetivo academico)
+  - sort carrega o ficheiro para memoria (adequado para ficheiros moderados)
+  - islash e uma shell simples sem pipes/redirecionamentos/aspas completas
+  - ls imprime por colunas com largura fixa (80) e sem deteccao de tamanho real do terminal
+
+10.2) Melhorias futuras
+  - sort externo (external sort) para ficheiros muito grandes
+  - islash com suporte a pipes e redirecionamentos
+  - ls com deteccao de largura do terminal e mais atributos (permissoes, owner, etc)
+
+
+14) BIBLIOGRAFIA
+
+  - KERNIGHAN, Brian W.; RITCHIE, Dennis M. The C Programming Language (2nd ed.)
+  - TANENBAUM, A. S. Modern Operating Systems (4th ed.)
+  - ALVES MARQUES et al. Fundamentos de Sistemas Operativos (FCA)
