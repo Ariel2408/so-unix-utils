@@ -6,6 +6,16 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+/*
+ * rm.c
+ * Implementação simples de "rm" (apagar ficheiros).
+ * Suporta:
+ *   -h  ajuda
+ *   -y  confirma cada ficheiro antes de apagar
+ *
+ * Nota: este rm apenas remove ficheiros (unlink). Não remove diretórios.
+ */
+
 static void print_help(FILE *out) {
   fprintf(out,
           "rm - apaga ficheiros\n"
@@ -24,6 +34,7 @@ int main(int argc, char **argv) {
   int confirm_each = 0;
   int first_file = 1;
 
+  /* Flags opcionais no início; depois disso tratamos o resto como ficheiros. */
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-y") == 0) {
       confirm_each = 1;
@@ -42,6 +53,7 @@ int main(int argc, char **argv) {
 
   int any_error = 0;
   for (int i = first_file; i < argc; i++) {
+    /* lstat só serve para validar existência e obter info básica. */
     struct stat st;
     if (lstat(argv[i], &st) != 0) {
       fprintf(stderr, "rm: %s: %s\n", argv[i], strerror(errno));

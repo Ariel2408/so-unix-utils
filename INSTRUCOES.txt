@@ -46,7 +46,7 @@ Para forcar recompilar tudo:
 
 3) COMO COMPILAR (COMANDOS)
 
-Estando na pasta do projeto (pinfalse):
+Estando na pasta do projeto 
   cd /caminho/para/pinfalse
   make clean
   make

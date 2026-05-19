@@ -7,6 +7,13 @@
 #include <string.h>
 #include <unistd.h>
 
+/*
+ * common.c
+ * Implementação dos helpers usados pelos vários comandos (cp, mv, ls, ...).
+ * A ideia é centralizar código repetido: parsing, alocação e I/O robusto.
+ */
+
+/* Verifica se a flag existe em argv (comparação exata com strcmp). */
 int arg_has_flag(int argc, char **argv, const char *flag) {
   for (int i = 1; i < argc; i++) {
     if (argv[i] && strcmp(argv[i], flag) == 0) {
@@ -16,6 +23,10 @@ int arg_has_flag(int argc, char **argv, const char *flag) {
   return 0;
 }
 
+/*
+ * Interpreta strings do tipo "-10" (com sinal '-' e pelo menos 1 dígito).
+ * Devolve 1 se conseguiu e o número for >= 0; caso contrário devolve 0.
+ */
 int parse_dash_number(const char *arg, long *out) {
   if (!arg || arg[0] != '-' || arg[1] == '\0') {
     return 0;
@@ -34,6 +45,10 @@ int parse_dash_number(const char *arg, long *out) {
   return 1;
 }
 
+/*
+ * Faz parsing estrito de um long em base 10.
+ * "Estrito" aqui significa: a string tem de ser toda consumida por strtol.
+ */
 long parse_long_strict(const char *s, int *ok) {
   if (ok) {
     *ok = 0;
@@ -56,6 +71,10 @@ long parse_long_strict(const char *s, int *ok) {
   return v;
 }
 
+/*
+ * Mostra um prompt (em stderr) e lê uma resposta do stdin.
+ * O primeiro caractere não-branco decide: 'y'/'Y' -> sim; outros -> não.
+ */
 int prompt_yes_no(const char *prompt) {
   if (prompt) {
     fputs(prompt, stderr);
@@ -74,6 +93,7 @@ int prompt_yes_no(const char *prompt) {
   return 0;
 }
 
+/* malloc que nunca devolve NULL: em caso de falha termina o programa. */
 void *xmalloc(size_t n) {
   void *p = malloc(n ? n : 1);
   if (!p) {
@@ -83,6 +103,7 @@ void *xmalloc(size_t n) {
   return p;
 }
 
+/* realloc que nunca devolve NULL: em caso de falha termina o programa. */
 void *xrealloc(void *p, size_t n) {
   void *r = realloc(p, n ? n : 1);
   if (!r) {
@@ -92,6 +113,7 @@ void *xrealloc(void *p, size_t n) {
   return r;
 }
 
+/* Copia uma string para memória nova usando xmalloc (NULL se s==NULL). */
 char *xstrdup(const char *s) {
   if (!s) {
     return NULL;
@@ -102,6 +124,10 @@ char *xstrdup(const char *s) {
   return d;
 }
 
+/*
+ * write_all tenta escrever todos os bytes pedidos.
+ * Útil para lidar com writes parciais e interrupções (EINTR).
+ */
 ssize_t write_all(int fd, const void *buf, size_t n) {
   const unsigned char *p = (const unsigned char *)buf;
   size_t off = 0;
@@ -118,6 +144,10 @@ ssize_t write_all(int fd, const void *buf, size_t n) {
   return (ssize_t)off;
 }
 
+/*
+ * Junta dois caminhos "a" e "b" numa string nova.
+ * Se "a" acabar sem '/', adiciona-o automaticamente.
+ */
 char *path_join2(const char *a, const char *b) {
   if (!a || !*a) {
     return xstrdup(b ? b : "");

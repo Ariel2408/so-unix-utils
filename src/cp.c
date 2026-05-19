@@ -8,6 +8,14 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+/*
+ * cp.c
+ * Implementação simples de "cp" (cópia de ficheiros).
+ * Suporta:
+ *   -h  ajuda
+ *   -i  modo interativo: pergunta antes de sobrescrever o destino
+ */
+
 static void print_help(FILE *out) {
   fprintf(out,
           "cp - copia ficheiros\n"
@@ -17,6 +25,10 @@ static void print_help(FILE *out) {
           "  -i        modo interativo (pergunta antes de sobrescrever DESTINO)\n");
 }
 
+/*
+ * Copia o conteúdo de src para dst.
+ * Mantém permissões básicas (modo 0777) com base no ficheiro origem.
+ */
 static int copy_file(const char *src, const char *dst) {
   int in = open(src, O_RDONLY);
   if (in < 0) {
@@ -81,6 +93,7 @@ int main(int argc, char **argv) {
   const char *src = NULL;
   const char *dst = NULL;
 
+  /* Parsing simples: flags primeiro, depois ORIGEM e DESTINO. */
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-i") == 0) {
       interactive = 1;
@@ -105,6 +118,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  /* Se o destino já existe e -i foi pedido, pede confirmação. */
   if (access(dst, F_OK) == 0 && interactive) {
     char prompt[4096];
     snprintf(prompt, sizeof(prompt), "cp: sobrescrever '%s'? [y/N] ", dst);

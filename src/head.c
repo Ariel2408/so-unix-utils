@@ -5,6 +5,18 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * head.c
+ * Implementação simples de "head" (primeiras linhas).
+ * Suporta:
+ *   -h    ajuda
+ *   -NUM  imprime as primeiras NUM linhas (por omissão 10)
+ *   -n    prefixa com o número da linha
+ *   -E    marca fim de linha com '$'
+ *
+ * Se não houver ficheiros, lê de stdin.
+ */
+
 static void print_help(FILE *out) {
   fprintf(out,
           "head - lista as primeiras linhas de um ficheiro\n"
@@ -16,6 +28,7 @@ static void print_help(FILE *out) {
           "  -E        indica fim de linha com $\n");
 }
 
+/* Imprime uma linha com os formatos opcionais (-n e -E). */
 static void print_line(const char *line, unsigned long line_no, int show_no,
                        int show_eol) {
   if (show_no) {
@@ -40,6 +53,7 @@ static void print_line(const char *line, unsigned long line_no, int show_no,
   }
 }
 
+/* Lê e imprime até max_lines linhas a partir de um stream. */
 static int process_stream(FILE *fp, long max_lines, int show_no, int show_eol) {
   char *line = NULL;
   size_t cap = 0;
@@ -74,6 +88,7 @@ int main(int argc, char **argv) {
   int any_error = 0;
   int files_start = 1;
 
+  /* Opções reconhecidas apenas no início; o resto é lista de ficheiros. */
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-n") == 0) {
       show_no = 1;

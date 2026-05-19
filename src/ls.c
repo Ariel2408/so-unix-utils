@@ -8,6 +8,18 @@
 #include <sys/stat.h>
 #include <time.h>
 
+/*
+ * ls.c
+ * Implementação simples de "ls" (listar diretórios).
+ * Suporta:
+ *   -h   ajuda
+ *   -l   listagem longa: nome, tamanho, data de modificação
+ *   -ox  ordena por: n (nome), s (tamanho), d (data)
+ *   -c   listagem em colunas (assume terminal de 80 colunas)
+ *
+ * Nota: esta versão ignora "." e ".." e usa lstat() para obter metadata.
+ */
+
 typedef struct {
   char *name;
   struct stat st;
@@ -24,12 +36,14 @@ static void print_help(FILE *out) {
           "  -c        listagem por colunas\n");
 }
 
+/* Comparador por nome (ordem lexicográfica). */
 static int cmp_name(const void *a, const void *b) {
   const Entry *ea = (const Entry *)a;
   const Entry *eb = (const Entry *)b;
   return strcmp(ea->name, eb->name);
 }
 
+/* Comparador por tamanho; em empate usa nome para desempate estável. */
 static int cmp_size(const void *a, const void *b) {
   const Entry *ea = (const Entry *)a;
   const Entry *eb = (const Entry *)b;
@@ -42,6 +56,7 @@ static int cmp_size(const void *a, const void *b) {
   return strcmp(ea->name, eb->name);
 }
 
+/* Comparador por data de modificação (mtime); em empate usa nome. */
 static int cmp_date(const void *a, const void *b) {
   const Entry *ea = (const Entry *)a;
   const Entry *eb = (const Entry *)b;
@@ -54,6 +69,7 @@ static int cmp_date(const void *a, const void *b) {
   return strcmp(ea->name, eb->name);
 }
 
+/* Formato "longo": nome, tamanho e data/hora (com base em st_mtime). */
 static void print_long(const Entry *e) {
   char buf[64];
   struct tm tmv;
@@ -62,6 +78,10 @@ static void print_long(const Entry *e) {
   printf("%s\t%lld\t%s\n", e->name, (long long)e->st.st_size, buf);
 }
 
+/*
+ * Imprime nomes em colunas.
+ * Calcula a largura da maior string e distribui por um terminal assumido de 80.
+ */
 static void print_columns(Entry *entries, size_t n) {
   if (n == 0) {
     return;
@@ -100,6 +120,7 @@ static void print_columns(Entry *entries, size_t n) {
   }
 }
 
+/* Caso "path" não seja diretório, trata como um ficheiro único. */
 static int list_single(const char *path, int long_list) {
   Entry e;
   e.name = (char *)path;
@@ -115,6 +136,10 @@ static int list_single(const char *path, int long_list) {
   return 0;
 }
 
+/*
+ * Lista um diretório, recolhendo entradas numa lista dinâmica para poder ordenar.
+ * "order" decide o comparador; "long_list" e "columns" controlam o output.
+ */
 static int list_dir(const char *path, int long_list, int columns, char order) {
   DIR *dir = opendir(path);
   if (!dir) {
@@ -139,6 +164,7 @@ static int list_dir(const char *path, int long_list, int columns, char order) {
       continue;
     }
 
+    /* Faz lstat ao caminho completo, mas guarda só o nome base para imprimir. */
     char *full = path_join2(path, de->d_name);
     struct stat st;
     if (lstat(full, &st) != 0) {
@@ -196,6 +222,7 @@ int main(int argc, char **argv) {
   char order = 'n';
   const char *path = ".";
 
+  /* Parsing simples de flags e (opcionalmente) um único caminho. */
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-l") == 0) {
       long_list = 1;

@@ -1,12 +1,18 @@
+# Makefile do projeto "so-unix-utils"
+# - compila cada utilitário em src/ para bin/
+# - coloca objetos em build/ para evitar recompilações desnecessárias
+
 CC ?= cc
 CFLAGS ?= -std=c11 -Wall -Wextra -Werror -pedantic -D_POSIX_C_SOURCE=200809L
 LDFLAGS ?=
 
+# Estrutura de diretórios do projeto
 SRC_DIR := src
 INC_DIR := include
 BIN_DIR := bin
 OBJ_DIR := build
 
+# Lista de programas a gerar (bin/<nome>)
 PROGS := head tail cp mv rm grep sort ls islash
 
 .PHONY: all clean

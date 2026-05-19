@@ -8,6 +8,18 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+/*
+ * islash.c (UEsh)
+ * Mini-shell/interpetador de comandos.
+ *
+ * Comandos internos:
+ *   cd, pwd, echo, sleep, exit
+ *
+ * Comandos externos:
+ *   executa via execvp() e, se for um comando do projeto (ls/sort/cp/...),
+ *   tenta primeiro o binário em "<diretório_inicial>/bin/<cmd>".
+ */
+
 static void print_help(FILE *out) {
   fprintf(out,
           "UEsh (islash) - shell / interpretador de comandos\n"
@@ -18,6 +30,7 @@ static void print_help(FILE *out) {
           "  -h        mostra esta ajuda e sai\n");
 }
 
+/* Mostra um prompt com user@host (cwd) > */
 static void prompt(void) {
   const char *user = NULL;
   struct passwd *pw = getpwuid(getuid());
@@ -43,6 +56,10 @@ static void prompt(void) {
   fflush(stdout);
 }
 
+/*
+ * Tokenização simples por espaços (não suporta aspas/escaping).
+ * Devolve um argv terminado em NULL; as strings apontam para o buffer "line".
+ */
 static char **tokenize(char *line, int *out_argc) {
   char **args = NULL;
   size_t used = 0;
@@ -69,6 +86,7 @@ static char **tokenize(char *line, int *out_argc) {
   return args;
 }
 
+/* Lista de comandos "externos" que existem no bin/ do projeto. */
 static int is_project_cmd(const char *cmd) {
   static const char *names[] = {"ls",   "sort", "cp",   "mv",   "rm",
                                 "grep", "head", "tail", NULL};
@@ -80,6 +98,10 @@ static int is_project_cmd(const char *cmd) {
   return 0;
 }
 
+/*
+ * Executa um comando externo num processo filho e espera no pai.
+ * Se o comando for do projeto e não tiver '/', tenta "<start_dir>/bin/<cmd>".
+ */
 static void run_external(const char *start_dir, char **args) {
   pid_t pid = fork();
   if (pid < 0) {
@@ -117,6 +139,7 @@ int main(int argc, char **argv) {
     return 0;
   }
 
+  /* Guardamos o diretório inicial para conseguir localizar "bin/" do projeto. */
   char start_dir[4096];
   if (!getcwd(start_dir, sizeof(start_dir))) {
     strncpy(start_dir, ".", sizeof(start_dir));

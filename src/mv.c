@@ -8,6 +8,18 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+/*
+ * mv.c
+ * Implementação simples de "mv" (mover/renomear ficheiros).
+ * Suporta:
+ *   -h  ajuda
+ *   -i  modo interativo: pergunta antes de sobrescrever o destino
+ *
+ * Estratégia:
+ *   1) tenta rename(src, dst) (rápido e atómico no mesmo filesystem)
+ *   2) se falhar com EXDEV (filesystems diferentes), faz copy+unlink
+ */
+
 static void print_help(FILE *out) {
   fprintf(out,
           "mv - move ou renomeia ficheiros\n"
@@ -17,6 +29,7 @@ static void print_help(FILE *out) {
           "  -i        modo interativo (pergunta antes de sobrescrever DESTINO)\n");
 }
 
+/* Cópia usada apenas como fallback quando rename() não é possível (EXDEV). */
 static int copy_file(const char *src, const char *dst) {
   int in = open(src, O_RDONLY);
   if (in < 0) {
@@ -81,6 +94,7 @@ int main(int argc, char **argv) {
   const char *src = NULL;
   const char *dst = NULL;
 
+  /* Parsing simples: flags primeiro, depois ORIGEM e DESTINO. */
   for (int i = 1; i < argc; i++) {
     if (strcmp(argv[i], "-i") == 0) {
       interactive = 1;
@@ -105,6 +119,7 @@ int main(int argc, char **argv) {
     return 1;
   }
 
+  /* Rejeita destino diretório; e se existir, pode pedir confirmação com -i. */
   struct stat dst_st;
   if (lstat(dst, &dst_st) == 0) {
     if (S_ISDIR(dst_st.st_mode)) {
@@ -120,10 +135,12 @@ int main(int argc, char **argv) {
     }
   }
 
+  /* rename() cobre renomear e mover dentro do mesmo filesystem. */
   if (rename(src, dst) == 0) {
     return 0;
   }
 
+  /* EXDEV indica "cross-device link": precisa de copiar em vez de rename. */
   if (errno != EXDEV) {
     fprintf(stderr, "mv: %s -> %s: %s\n", src, dst, strerror(errno));
     return 1;
@@ -132,6 +149,7 @@ int main(int argc, char **argv) {
   if (copy_file(src, dst) != 0) {
     return 1;
   }
+  /* Depois de copiar com sucesso, remove a origem para simular "move". */
   if (unlink(src) != 0) {
     fprintf(stderr, "mv: apagar origem falhou: %s: %s\n", src, strerror(errno));
     return 1;

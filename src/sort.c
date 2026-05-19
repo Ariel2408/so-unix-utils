@@ -5,6 +5,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * sort.c
+ * Implementação simples de "sort" (ordenar linhas de ficheiros de texto).
+ * Suporta:
+ *   -h  ajuda
+ *   -d  ordenação decrescente
+ *
+ * Para cada ficheiro de entrada, escreve o resultado em "<ficheiro>.sort".
+ */
+
 static void print_help(FILE *out) {
   fprintf(out,
           "sort - ordena ficheiros de texto\n"
@@ -14,14 +24,22 @@ static void print_help(FILE *out) {
           "  -d        ordenacao decrescente\n");
 }
 
+/* Comparador para qsort: ordem crescente (strcmp). */
 static int cmp_asc(const void *a, const void *b) {
   const char *sa = *(const char *const *)a;
   const char *sb = *(const char *const *)b;
   return strcmp(sa, sb);
 }
 
+/* Comparador para qsort: ordem decrescente. */
 static int cmp_desc(const void *a, const void *b) { return -cmp_asc(a, b); }
 
+/*
+ * Ordena um ficheiro:
+ *   1) lê todas as linhas para memória
+ *   2) ordena com qsort
+ *   3) escreve num ficheiro novo "<path>.sort"
+ */
 static int sort_one(const char *path, int desc) {
   FILE *fp = fopen(path, "r");
   if (!fp) {
@@ -52,6 +70,7 @@ static int sort_one(const char *path, int desc) {
   fclose(fp);
 
   if (used == 0) {
+    /* Ficheiro vazio: cria "<path>.sort" vazio. */
     free(lines);
     char *out_path = xmalloc(strlen(path) + 6);
     sprintf(out_path, "%s.sort", path);
@@ -68,6 +87,7 @@ static int sort_one(const char *path, int desc) {
 
   qsort(lines, used, sizeof(*lines), desc ? cmp_desc : cmp_asc);
 
+  /* Constrói o nome do ficheiro de saída e escreve as linhas ordenadas. */
   char *out_path = xmalloc(strlen(path) + 6);
   sprintf(out_path, "%s.sort", path);
   FILE *out = fopen(out_path, "w");
@@ -83,6 +103,7 @@ static int sort_one(const char *path, int desc) {
 
   for (size_t i = 0; i < used; i++) {
     fputs(lines[i], out);
+    /* Mantém a convenção de terminar cada linha com '\n'. */
     if (lines[i][0] != '\0') {
       size_t n = strlen(lines[i]);
       if (lines[i][n - 1] != '\n') {

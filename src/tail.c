@@ -5,6 +5,19 @@
 #include <stdlib.h>
 #include <string.h>
 
+/*
+ * tail.c
+ * Implementação simples de "tail" (últimas linhas).
+ * Suporta:
+ *   -h    ajuda
+ *   -NUM  imprime as últimas NUM linhas (por omissão 10)
+ *   -n    prefixa com o número da linha
+ *   -E    marca fim de linha com '$'
+ *
+ * Estratégia: buffer circular com capacidade N para guardar as últimas linhas.
+ * Se não houver ficheiros, lê de stdin.
+ */
+
 typedef struct {
   char *s;
   unsigned long line_no;
@@ -21,6 +34,7 @@ static void print_help(FILE *out) {
           "  -E        indica fim de linha com $\n");
 }
 
+/* Imprime uma linha com os formatos opcionais (-n e -E). */
 static void print_line(const char *line, unsigned long line_no, int show_no,
                        int show_eol) {
   if (show_no) {
@@ -45,11 +59,16 @@ static void print_line(const char *line, unsigned long line_no, int show_no,
   }
 }
 
+/*
+ * Lê um stream inteiro e imprime apenas as últimas last_n linhas.
+ * Guarda as linhas num buffer circular para não manter o ficheiro todo em RAM.
+ */
 static int process_stream(FILE *fp, long last_n, int show_no, int show_eol) {
   if (last_n <= 0) {
     return 0;
   }
 
+  /* Buffer circular: "cap" linhas, reutilizadas quando o buffer enche. */
   size_t cap = (size_t)last_n;
   TailLine *buf = xmalloc(cap * sizeof(*buf));
   for (size_t i = 0; i < cap; i++) {
@@ -98,6 +117,7 @@ static int process_stream(FILE *fp, long last_n, int show_no, int show_eol) {
     count_out = cap;
   }
 
+  /* Imprime na ordem correta: do mais antigo para o mais recente no buffer. */
   for (size_t i = 0; i < count_out; i++) {
     size_t idx = (start + i) % cap;
     print_line(buf[idx].s, buf[idx].line_no, show_no, show_eol);
